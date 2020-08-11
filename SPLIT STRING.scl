@@ -1,0 +1,69 @@
+﻿FUNCTION "SPLIT STRING" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      "SRC STRING" : String;
+      "DEST ARRAY" : Variant;
+      SEPARATOR : Char;
+   END_VAR
+
+   VAR_TEMP 
+      i : Int;
+      STR_LEN : Int;
+      "STR _TEMP" : String;
+      DELIMITER_POS : Int;
+      ELEMENT_LEN : Int;
+      REST_LEN : Int;
+      N_ELEMENTS : UDInt;
+      "ARRAY" : Array[1..50] of String[10];
+      ERR_CODE : Int;
+   END_VAR
+
+
+BEGIN
+	(*     SPLIT STRINGS
+	CREATED BY: RAUL ROBINS
+	CREATED ON: 08/05/2020
+	VERSION: 1.0
+	*)
+	
+	//CHECK FOR ARRAY NUMBER OF ELEMENTS
+	IF IS_ARRAY(#"DEST ARRAY") THEN
+	    #N_ELEMENTS := CountOfElements(#"DEST ARRAY");
+	END_IF;
+	
+	// EMPTY ARRAY STRINGS
+	FOR #i := 1 TO UDINT_TO_INT(#N_ELEMENTS) DO
+	    #ARRAY[#i] := '';
+	END_FOR;
+	
+	//INIT VARS
+	#STR_LEN := LEN(#"SRC STRING");
+	#"STR _TEMP" := #"SRC STRING";
+	#i := 0;
+	
+	//LOOP LOOK FOR SEPARATOR
+	WHILE #STR_LEN > 0 AND #i < 15 DO
+	    #i := #i + 1;
+	    #DELIMITER_POS := FIND(IN1 := #"STR _TEMP", IN2 := #SEPARATOR);
+	    IF #DELIMITER_POS > 0 THEN
+	        #ELEMENT_LEN := #DELIMITER_POS - 1;
+	        #ARRAY[#i] := LEFT(IN := #"STR _TEMP", L := #ELEMENT_LEN);
+	        #REST_LEN := #STR_LEN - #DELIMITER_POS;
+	        #"STR _TEMP" := RIGHT(IN := #"STR _TEMP", L := #REST_LEN);
+	    ELSE
+	        #ARRAY[#i] := #"STR _TEMP";
+	        #"STR _TEMP" := '';
+	    END_IF;
+	    #STR_LEN := LEN(#"STR _TEMP");
+	END_WHILE;
+	
+	//COPY ARRAY TO DB
+	#ERR_CODE := MOVE_BLK_VARIANT(SRC := #ARRAY,
+	                 COUNT := #N_ELEMENTS,
+	                 SRC_INDEX := 0,
+	                 DEST_INDEX := 0,
+	                 DEST => #"DEST ARRAY");
+	
+END_FUNCTION
+
